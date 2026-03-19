@@ -94,7 +94,7 @@ export default function HRDashboard() {
       await supabase.from('notifications').insert({
         user_id: candidateId,
         title: `🎯 ${company} saved your profile!`,
-        description: `A recruiter from ${company} saved your profile on JobGenie AI. Make sure your portfolio is up to date!`,
+        message: `A recruiter from ${company} saved your profile on JobGenie AI. Make sure your portfolio is up to date!`,
         type: 'hr_saved',
       })
     }
@@ -112,7 +112,7 @@ export default function HRDashboard() {
     await supabase.from('notifications').insert({
       user_id: candidate.user_id,
       title: `📩 ${company} wants to connect!`,
-      description: `A recruiter from ${company} found your profile on JobGenie AI and is interested in you. Check your email or LinkedIn!`,
+      message: `A recruiter from ${company} found your profile on JobGenie AI and is interested in you. Check your email or LinkedIn!`,
       type: 'hr_contact',
     })
     setContactSent(s => new Set([...s, candidate.user_id]))
