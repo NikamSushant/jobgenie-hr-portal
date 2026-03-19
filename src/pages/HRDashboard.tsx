@@ -67,8 +67,7 @@ export default function HRDashboard() {
       let query = supabase.from('profiles')
         .select('user_id, full_name, job_title, bio, skills, location, experience_years, portfolio, linkedin, email')
         .not('full_name', 'is', null)
-        .not('skills', 'is', null)
-        .limit(60)
+        .limit(100)
       if (loc) query = query.ilike('location', `%${loc}%`)
       if (exp) query = query.gte('experience_years', parseInt(exp))
       const { data } = await query
