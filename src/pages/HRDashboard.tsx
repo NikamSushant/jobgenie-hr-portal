@@ -32,6 +32,21 @@ function nameToSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
+// ✅ FIX 1: Smart display name — full_name → job_title → Profile #XXXX
+function getDisplayName(c: Candidate): string {
+  if (c.full_name && c.full_name.trim()) return c.full_name.trim()
+  if (c.job_title && c.job_title.trim()) return c.job_title.trim()
+  return 'Profile #' + c.user_id.slice(0, 4).toUpperCase()
+}
+
+// ✅ FIX 2: Initials from display name (works for job titles too)
+function getInitials(c: Candidate): string {
+  const name = getDisplayName(c)
+  const words = name.split(' ')
+  if (words.length === 1) return name.slice(0, 2).toUpperCase()
+  return words.map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
 export default function HRDashboard() {
   const navigate = useNavigate()
   const [hrProfile, setHRProfile] = useState<HRProfile | null>(null)
@@ -90,8 +105,8 @@ export default function HRDashboard() {
         )
       }
 
-      // Only show profiles with full_name or skills
-      results = results.filter((c: any) => c.full_name || (c.skills && c.skills.length > 0))
+      // ✅ FIX 3: Show all profiles that have skills — name can be null, we handle it in display
+      results = results.filter((c: any) => c.skills && c.skills.length > 0)
 
       setCandidates(results as Candidate[])
     } finally {
@@ -122,10 +137,11 @@ export default function HRDashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const company = hrProfile?.company_name || 'a company'
+    const displayName = getDisplayName(candidate)
     await supabase.from('hr_contact_requests').insert({
       hr_user_id: user.id,
       candidate_user_id: candidate.user_id,
-      message: `Hi ${candidate.full_name}, we found your profile on JobGenie AI and are interested in connecting with you regarding opportunities at ${company}.`,
+      message: `Hi ${displayName}, we found your profile on JobGenie AI and are interested in connecting with you regarding opportunities at ${company}.`,
     })
     await supabase.from('notifications').insert({
       user_id: candidate.user_id,
@@ -270,15 +286,20 @@ export default function HRDashboard() {
                 className="candidate-card" onClick={() => setSelected(c)}>
                 <div style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:14 }}>
                   <div style={{ width:48, height:48, borderRadius:14, flexShrink:0, background:'linear-gradient(135deg,rgba(245,158,11,0.2),rgba(249,115,22,0.1))', border:'1.5px solid rgba(245,158,11,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {/* ✅ FIX 4: Use getInitials instead of checking full_name directly */}
                     <span style={{ fontSize:16, fontWeight:800, color:'#f59e0b' }}>
-                      {c.full_name ? initials(c.full_name) : '??'}
+                      {getInitials(c)}
                     </span>
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
+                    {/* ✅ FIX 5: Use getDisplayName — no more 'Anonymous' */}
                     <div style={{ fontSize:15, fontWeight:700, color:'#fff', marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                      {c.full_name || 'Anonymous'}
+                      {getDisplayName(c)}
                     </div>
-                    <div style={{ fontSize:12, color:'#f59e0b', fontWeight:600 }}>{c.job_title}</div>
+                    {/* ✅ FIX 6: Show job_title as subtitle only if it's different from display name */}
+                    <div style={{ fontSize:12, color:'#f59e0b', fontWeight:600 }}>
+                      {c.full_name ? c.job_title : null}
+                    </div>
                   </div>
                   <button onClick={e => { e.stopPropagation(); toggleSave(c.user_id) }}
                     style={{ background:saved.has(c.user_id)?'rgba(245,158,11,0.15)':'transparent', border:`1.5px solid ${saved.has(c.user_id)?'rgba(245,158,11,0.3)':'#2a2a2a'}`, borderRadius:10, width:36, height:36, cursor:'pointer', fontSize:16, color:saved.has(c.user_id)?'#f59e0b':'#444', transition:'all 0.25s', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -320,10 +341,12 @@ export default function HRDashboard() {
               <button onClick={() => setSelected(null)} style={{ position:'absolute', top:16, right:20, background:'#252525', border:'none', borderRadius:10, width:36, height:36, color:'#888', fontSize:18, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
               <div style={{ display:'flex', gap:18, alignItems:'center', marginBottom:28 }}>
                 <div style={{ width:68, height:68, borderRadius:20, flexShrink:0, background:'linear-gradient(135deg,rgba(245,158,11,0.2),rgba(249,115,22,0.1))', border:'2px solid rgba(245,158,11,0.3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <span style={{ fontSize:24, fontWeight:800, color:'#f59e0b' }}>{selected.full_name ? initials(selected.full_name) : '??'}</span>
+                  {/* ✅ FIX 7: Modal initials also use getInitials */}
+                  <span style={{ fontSize:24, fontWeight:800, color:'#f59e0b' }}>{getInitials(selected)}</span>
                 </div>
                 <div>
-                  <h2 style={{ fontSize:26, fontWeight:800, color:'#fff', letterSpacing:'-0.02em', marginBottom:4 }}>{selected.full_name || 'Anonymous'}</h2>
+                  {/* ✅ FIX 8: Modal title uses getDisplayName */}
+                  <h2 style={{ fontSize:26, fontWeight:800, color:'#fff', letterSpacing:'-0.02em', marginBottom:4 }}>{getDisplayName(selected)}</h2>
                   <div style={{ fontSize:13, color:'#f59e0b', fontWeight:600 }}>{selected.job_title}</div>
                 </div>
               </div>
@@ -352,7 +375,7 @@ export default function HRDashboard() {
                 </div>
               )}
               <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-                <a href={`${JOB_GENIE_APP_URL}/portfolio/${nameToSlug(selected.full_name||'')}`} target="_blank" rel="noreferrer" style={{ textDecoration:'none' }}>
+                <a href={`${JOB_GENIE_APP_URL}/portfolio/${nameToSlug(getDisplayName(selected))}`} target="_blank" rel="noreferrer" style={{ textDecoration:'none' }}>
                   <button className="btn-outline">Portfolio ↗</button>
                 </a>
                 {selected.linkedin && (
