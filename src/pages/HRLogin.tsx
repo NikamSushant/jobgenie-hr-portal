@@ -97,14 +97,15 @@ export default function HRLogin() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 60, height: 60, borderRadius: 18,
-            background: 'linear-gradient(135deg,#f59e0b,#f97316)',
-            marginBottom: 16, boxShadow: '0 8px 28px rgba(245,158,11,0.3)',
-          }}>
-            <span style={{ fontSize: 28 }}>⚡</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="JobGenie AI"
+            style={{
+              width: 88, height: 88, objectFit: 'contain',
+              marginBottom: 16,
+              filter: 'drop-shadow(0 8px 24px rgba(245,158,11,0.35))',
+            }}
+          />
           <div style={{
             fontSize: 32, fontWeight: 800, color: '#fff',
             letterSpacing: '-0.02em', marginBottom: 4,
