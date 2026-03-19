@@ -127,9 +127,9 @@ export default function HRDashboard() {
 
   if (loading) return (
     <div style={{ background: '#0f0f0f', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-      <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg,#f59e0b,#f97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, animation: 'pulse 1.5s infinite' }}>⚡</div>
+      <img src="/logo.png" alt="JobGenie AI" style={{ width: 72, height: 72, objectFit: 'contain', animation: 'pulse 1.5s infinite', filter: 'drop-shadow(0 8px 24px rgba(245,158,11,0.4))' }} />
       <div style={{ fontFamily: 'Outfit, sans-serif', fontSize: 13, color: '#555', letterSpacing: '0.05em' }}>Loading candidates...</div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} } * { margin:0;padding:0;box-sizing:border-box; }`}</style>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.95)} } * { margin:0;padding:0;box-sizing:border-box; }`}</style>
     </div>
   )
 
@@ -210,12 +210,14 @@ export default function HRDashboard() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 11,
-            background: 'linear-gradient(135deg,#f59e0b,#f97316)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 800, boxShadow: '0 4px 14px rgba(245,158,11,0.3)',
-          }}>⚡</div>
+          <img
+            src="/logo.png"
+            alt="JobGenie AI"
+            style={{
+              width: 40, height: 40, objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 12px rgba(245,158,11,0.4))',
+            }}
+          />
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
               JobGenie <span style={{ color: '#f59e0b' }}>HR</span>
