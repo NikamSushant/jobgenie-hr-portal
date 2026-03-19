@@ -12,28 +12,56 @@ export default function HRLogin() {
     email: '', password: '', full_name: '', company_name: '',
     company_size: '', industry: '',
   })
+  const [showPassword, setShowPassword] = useState(false)
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async () => {
     setError(''); setLoading(true)
     try {
+      if (!form.email.trim()) { setError('Email is required'); return }
+      if (!form.password.trim()) { setError('Password is required'); return }
+      if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
+
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
-        if (error) { setError(error.message); return }
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: form.email.trim(), password: form.password,
+        })
+        if (error) {
+          if (error.message.includes('Invalid login')) setError('Invalid email or password')
+          else if (error.message.includes('Email not confirmed')) setError('Please verify your email first')
+          else setError(error.message)
+          return
+        }
+        const { data: hrData } = await supabase
+          .from('hr_users').select('user_id')
+          .eq('user_id', data.user?.id).single()
+        if (!hrData) {
+          await supabase.auth.signOut()
+          setError('No HR account found. Please register first.')
+          return
+        }
         navigate('/dashboard')
       } else {
-        if (!form.full_name || !form.company_name) { setError('Please fill all fields'); return }
-        const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+        if (!form.full_name.trim()) { setError('Full name is required'); return }
+        if (!form.company_name.trim()) { setError('Company name is required'); return }
+        const { data, error } = await supabase.auth.signUp({
+          email: form.email.trim(), password: form.password,
+        })
         if (error) { setError(error.message); return }
         if (data.user) {
-          await supabase.from('hr_users').insert({
-            user_id: data.user.id, full_name: form.full_name,
-            company_name: form.company_name, company_size: form.company_size,
-            industry: form.industry, email: form.email,
+          const { error: hrErr } = await supabase.from('hr_users').insert({
+            user_id: data.user.id, full_name: form.full_name.trim(),
+            company_name: form.company_name.trim(), company_size: form.company_size,
+            industry: form.industry, email: form.email.trim(),
           })
+          if (hrErr) { setError('Profile save failed: ' + hrErr.message); return }
           navigate('/dashboard')
+        } else {
+          setError('Signup failed. Please try again.')
         }
       }
+    } catch (e: any) {
+      setError(e?.message || 'Something went wrong')
     } finally { setLoading(false) }
   }
 
@@ -174,8 +202,44 @@ export default function HRLogin() {
             </div>
             <div>
               <label className="hr-lbl">Password</label>
-              <input className="hr-inp" type="password" placeholder="••••••••" value={form.password} onChange={e => set('password', e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="hr-inp"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={e => set('password', e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                  style={{ paddingRight: 48 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  style={{
+                    position: 'absolute', right: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none',
+                    cursor: 'pointer', fontSize: 18,
+                    color: showPassword ? '#f59e0b' : '#555',
+                    transition: 'color 0.2s',
+                    lineHeight: 1,
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (
