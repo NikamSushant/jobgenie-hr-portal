@@ -28,9 +28,7 @@ const JOB_GENIE_APP_URL = import.meta.env.VITE_APP_URL || 'https://your-app.verc
 function initials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
-function nameToSlug(name: string) {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-}
+
 
 // ✅ FIX 1: Smart display name — full_name → job_title → Profile #XXXX
 function getDisplayName(c: Candidate): string {
@@ -375,7 +373,7 @@ export default function HRDashboard() {
                 </div>
               )}
               <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-                <a href={`${JOB_GENIE_APP_URL}/portfolio/${nameToSlug(getDisplayName(selected))}`} target="_blank" rel="noreferrer" style={{ textDecoration:'none' }}>
+                <a href={`${JOB_GENIE_APP_URL}/portfolio/${selected.user_id}`} target="_blank" rel="noreferrer" style={{ textDecoration:'none' }}>
                   <button className="btn-outline">Portfolio ↗</button>
                 </a>
                 {selected.linkedin && (
